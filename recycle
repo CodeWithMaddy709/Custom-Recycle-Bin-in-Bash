@@ -1,0 +1,98 @@
+#!/bin/bash
+
+# Phase 1 – Basic Functionality	
+# 	The recycle bin will be $HOME/recyclebin
+
+trashpath=$HOME/recyclebin/
+OptionFlag_i=0
+OptionFlag_v=0
+OptionFlag_r=0
+OptionFlag=0
+
+
+
+
+trash(){
+    # . script creates $HOME/recyclebin directory if not present 
+if [ ! -d $trashpath ]
+then
+        mkdir $trashpath
+fi
+
+if [ $# -eq 0 ]
+then
+        echo "No filename provided"
+        exit 1
+else
+# Phase 3 – Multiple Files, Wildcards and OptionFlagFlag
+	for i in $@
+	do
+		if [[ $1 == "-"* ]]
+		then
+			OptionFlag=1
+			if [[ $1 == *"i"* ]]
+			then
+				OptionFlag_i=1
+			fi
+			if [[ $1 == *"v"* ]]
+			then
+				OptionFlag_v=1	
+			fi
+			if [[ $1 == *"r"* ]]
+			then
+				OptionFlag_r=1
+			fi
+		shift
+		fi
+	done
+    for i in $@
+    do
+		if [ ! -e $i ]
+        then
+            echo "cannot remove $i: No such file or directory"
+            exit 1
+            elif [ -d $i ]
+            then
+                echo "$i Is a directory"
+                # Phase 4 – Recycle Files Recursively
+				if [[ $OptionFlag_r == 1 ]]
+				then
+					$0 $1"/"*
+					rm $1 -r
+					echo "Files in $i removed"
+					exit 0
+				else
+					echo "error! $1: Is a directory"
+					exit 1
+				fi
+            elif echo $i | grep -q "recycle"
+            then
+                echo "Can't delete recycle : Operation failed"
+                exit 1
+            else
+                inode=$(ls -i $i | cut -d " " -f1)
+                basename=$(basename $i)
+                file=$basename"_"$inode
+                originpath=$(readlink -f $i)
+                # Phase 3 part2
+				if [[ $OptionFlag_i == 1 ]] 
+				then
+					read -p "Remove regular file $i?: " choice
+					case $choice in
+					y|Y|yes) ;;
+					n|*) 	 exit 0;;
+					esac
+				fi
+				if [[ $OptionFlag_v == 1 ]] 
+				then
+					echo "removed $i"
+				fi
+				mv $i $file
+				mv $file $trashpath
+				echo $file':'$originpath >> $HOME/.restore.info
+                echo "$i Sucessfully Recyled"
+        fi
+    done
+fi
+}
+trash $@

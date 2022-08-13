@@ -1,0 +1,45 @@
+#!/bin/bash
+# Phase 2 – Basic Restore
+trashpath=$HOME/recyclebin/
+
+# -	No filename provided - Display an error message if no file provided as argument, and set an error exit status.
+if [ $# == 0 ]
+then
+    echo "No filename provided"
+    exit 1
+    elif [ ! -e $trashpath$1 ]
+    then
+        echo "File $i is not present in recyclebin"
+        exit 1
+fi
+originpath=$(grep $1 $HOME/.restore.info | cut -d ":" -f2)
+filepath=$(readlink -f $originpath)
+#  Phase 5 – Restore Files Recycled Recursively
+	if [[ $OptionFlag_r == 1 ]]
+	then
+		$0 $1"/"*
+		rm $1 -r
+		echo "Restored Sucessfully "
+		exit 0
+		else
+			echo "error! $1: Is a directory"
+			exit 1
+		fi
+    if [ -e $originpath ]
+    then
+        read -p "Do you want to overwrite? y/n: " choice
+        case $choice in
+        y|Y|yes) mv $trashpath$1 $filepath
+                 grep -v $1 $HOME/.restore.info > $HOME/.temp
+                 mv $HOME/.temp $HOME/.restore.info
+                 echo "done"
+                 exit 0;;
+        n|*) echo "done"
+             exit 0;;
+        esac
+    else
+        mv $trashpath$1 $filepath
+        grep -v $1 $HOME/.restore.info > $HOME/.temp
+        mv $HOME/.temp $HOME/.restore.info
+        echo "Sucessfully Restored"
+fi
